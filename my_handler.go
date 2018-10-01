@@ -35,10 +35,13 @@ func init() {
 }
 
 func init_cef_handlers() {
-	RegisterV8Handler("setResult", cef_handler_cefResult)
-	RegisterV8Handler("callback", cef_handler_cefCallback)
-	RegisterV8Handler("renderImage", cef_handler_renderImage)
-	RegisterV8Handler("openWindow", cef_handler_openWindow)
+	RegisterJsExtensionHandler(`v8/gx`, `var view;if(!view){view={}}(function(){view.setResult=function(v){native function setResult(v);return setResult(v)};view.callback=function(){native function callback();return callback.apply(this,arguments)};view.renderImage=function(v,w,k){native function renderImage(v,w,k);return renderImage(v,w,k)};view.openWindow=function(u){native function openWindow(u);return openWindow(u)}})();`,
+		map[string]V8Handler{
+			"setResult":   cef_handler_cefResult,
+			"callback":    cef_handler_cefCallback,
+			"renderImage": cef_handler_renderImage,
+			"openWindow":  cef_handler_openWindow,
+		})
 }
 
 // Cef调用

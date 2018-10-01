@@ -22,9 +22,15 @@ type V8Handler func(*Browser, []V8Value) interface{}
 
 var V8Callbacks map[string]V8Callback
 var V8Handlers map[string]V8Handler
+var V8Extensions map[string]string
 
 func init() {
-	V8Handlers = make(map[string]V8Handler)
+	if V8Handlers == nil {
+		V8Handlers = make(map[string]V8Handler)
+	}
+	if V8Extensions == nil {
+		V8Extensions = make(map[string]string)
+	}
 }
 
 //export go_RenderProcessHandlerOnWebKitInitialized
@@ -32,65 +38,40 @@ func go_RenderProcessHandlerOnWebKitInitialized(handler *C.cef_v8handler_t) {
 	logger.Println("go_RenderProcessHandlerOnWebKitInitialized")
 
 	init_cef_handlers()
+	for ext, code := range V8Extensions {
+		C.cef_register_extension(CEFString(ext), CEFString(code), handler)
+	}
 
-	/*extCode := `
-	  var app;
-	  if (!app) {
-	    app = {};
-	  }
-	  (function() {
+}
 
-	    app.callback = function() {
-	      native function callback();
-	      return callback.apply(this, arguments);
-	    }
+//2018-10-01 add to register mulit extentisons
+func RegisterJsExtensionHandler(ext, code string, handlers map[string]V8Handler) {
+	if V8Extensions == nil {
+		V8Extensions = make(map[string]string)
+	}
+	if _, ok := V8Extensions[ext]; ok {
+		V8Extensions[ext] += code
+	} else {
+		V8Extensions[ext] = code
+	}
+	for name, handler := range handlers {
+		RegisterV8Handler(name, handler)
+	}
+}
 
-	    app.move = function(x, y) {
-	    	native function move(x, y);
-	    	return move(x, y);
-	    }
-
-	    app.close = function() {
-	    	native function close();
-	    	return close();
-	    }
-
-	  })();
-	`*/
-
-	var extCode string
-	extCode = `var view;
-      if (!view) {
-        view = {};
-      }
-      (function() {
-
-      view.setResult = function(v) {
-		   native function setResult(v);
-		   return setResult(v);
-		}
-
-		view.callback = function() {
-		   native function callback();
-		   return callback.apply(this, arguments);
-		}
-
-		view.renderImage = function(v, w, k) {
-		   native function renderImage(v, w, k);
-		   return renderImage(v, w, k);
-		}
-
-		view.openWindow = function(u) {
-		   native function openWindow(u);
-		   return openWindow(u);
-		}
-
-      `
-	extCode += `
-			})();
-	`
-
-	C.cef_register_extension(CEFString("v8/gx"), CEFString(extCode), handler)
+//2018-10-01 add to register mulit extentisons
+func RegisterJsExtensionCallback(ext, code string, handlers map[string]V8Callback) {
+	if V8Extensions == nil {
+		V8Extensions = make(map[string]string)
+	}
+	if _, ok := V8Extensions[ext]; ok {
+		V8Extensions[ext] += code
+	} else {
+		V8Extensions[ext] = code
+	}
+	for name, handler := range handlers {
+		RegisterV8Callback(name, handler)
+	}
 }
 
 //export go_V8HandlerExecute

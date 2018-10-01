@@ -37,7 +37,11 @@ import (
 	//"fmt"
 )
 
-var logger *log.Logger = log.New(os.Stdout, "[cef] ", log.Lshortfile)
+var logger *log.Logger = log.New(os.Stdout, "[cef] ", log.LstdFlags|log.Lshortfile)
+
+func SetLogger(log *log.Logger) {
+	logger = log
+}
 
 var _MainArgs *C.struct__cef_main_args_t
 var _AppHandler *C.cef_app_t               // requires reference counting
